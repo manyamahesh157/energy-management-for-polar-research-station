@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # PolarSync AI Core Engine & Interactive Cockpit
+  polarsync-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: polarsync-ai-dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"   # Streamlit UI
+      - "8000:8000"   # FastAPI Telemetry & REST
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+      - STATION_ID=MAITRI_70S
+      - ENVIRONMENT=edge_production
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./logs:/app/logs
+
+  # Lightweight Local MQTT Broker for HIL Lite & Sensor Ingestion
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: polarsync-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+networks:
+  default:
+    name: polarsync-network
